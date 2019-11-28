@@ -13,13 +13,14 @@ public class Main {
         //finding excel document
         String fileName = "";
         BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-        System.out.print("Zadaj nazov excel suboru: ");
-        try {
-            fileName = buffer.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        excel.findExcelFiles(fileName);
+        do {
+            System.out.print("Zadaj nazov excel suboru: ");
+            try {
+                fileName = buffer.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } while (excel.findExcelFiles(fileName) != 0);
         //opening the excel document
         excel.openExcelDoc();
         //reading data
@@ -29,7 +30,6 @@ public class Main {
         excel.readSonarData();
         excel.closeExcelDoc();
         //writing data
-        System.out.println("Writing data to file...");
         excel.writeValuesToExcel();
         long endTime = getFinishTime();
         System.out.println("Successfully finished.");

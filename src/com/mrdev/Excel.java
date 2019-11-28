@@ -30,56 +30,65 @@ class Excel {
     private ArrayList<GPSData> gpsDataList;
     private List<SonarData> sonarDataList;
 
-    StringBuilder fileName;
-    File folder;
-    String fileWithPath;
+    private StringBuilder fileName;
+    private String fileWithPath;
 
-    void findExcelFiles(String name) {
-        fileName = new StringBuilder(name);
-        folder = new File("./");
+    /**
+     * @param name filename
+     * @return 0 if file exist 1 if not
+     */
+    int findExcelFiles(String name) {
+        File folder;
         if (name.isEmpty()) {
+            folder = new File("./");
             System.out.println("Zoznam najdenych suborov: ");
             File[] listOfFiles = folder.listFiles();
+            ArrayList<File> listOfWantedFiles = new ArrayList<>();
+            int countOfWantedFiles = 0;
             for (int i = 0; i < listOfFiles.length; i++) {
-                if (listOfFiles[i].getName().contains(".xlsx")) {
-                    if (listOfFiles[i].isFile() && listOfFiles[i].getName().contains("body")) {
-                        File file = new File(listOfFiles[i].getAbsolutePath());
-                        System.out.println(i + ": " + file);
-                        try {
-                            fileIn = new FileInputStream(file);
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        }
+                if (listOfFiles[i].isFile() && listOfFiles[i].getName().contains(".xlsx")) {
+                    File file = new File(listOfFiles[i].getAbsolutePath());
+                    listOfWantedFiles.add(file);
+                    countOfWantedFiles++;
+                    System.out.println(countOfWantedFiles + ": " + listOfWantedFiles.get(countOfWantedFiles - 1));
+                    try {
+                        fileIn = new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
                     }
                 }
             }
             BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
             System.out.print("Zadajte poradove cislo z predchadzajuceho zoznamu suborov: ");
             try {
-                int fileIndex = Integer.parseInt(buffer.readLine());
-                fileName.append(listOfFiles[fileIndex]);
+                fileName = new StringBuilder();
+                int index = Integer.parseInt(buffer.readLine());
+                fileName.append(listOfWantedFiles.get(index - 1).getName());
                 fileWithPath = folder.getAbsolutePath() + "\\" + fileName;
                 fileIn = new FileInputStream(fileWithPath);
-                System.out.println(listOfFiles[fileIndex]);
             } catch (IOException e) {
-                e.printStackTrace();
+                return 1;
             }
         } else {
+            fileName = new StringBuilder(name);
             folder = new File("");
             try {
-                if (!name.contains(".")) {//&& !name.substring(".xlsx".length() - 5).equals(".xlsx")) {
+                if (!name.contains(".")) {
                     fileName.append(".xlsx");
+                } else if (name.contains(".")) {
+                    int indexOfDot = fileName.indexOf(".");
+                    String n = fileName.substring(0, indexOfDot);
+                    fileName.replace(0, fileName.length(), n + ".xlsx");
                 }
                 fileWithPath = folder.getAbsolutePath() + "\\" + fileName;
-                System.out.println(fileWithPath);
                 fileIn = new FileInputStream(new File(fileWithPath));
 //                fileIn = new FileInputStream(new File("C:\\BOX\\ReefData\\bodyx.xlsx")); //alternativa natvrdo
             } catch (FileNotFoundException e) {
                 System.out.println(folder.getAbsolutePath() + "\\" + fileName + " neexistuje");
-                e.printStackTrace();
+                return 1;
             }
-            System.out.println(fileName);
         }
+        return 0;
     }
 
     void openExcelDoc() {
@@ -172,6 +181,7 @@ class Excel {
      * Stlpec za GPS data bude rozdiel GPS cas - sonar cas
      */
     void writeValuesToExcel() {
+        System.out.println("Writing data to file: " + fileName);
         long currentGPS;
         long currentSonar;
         long nextSonar;
@@ -179,7 +189,7 @@ class Excel {
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss.SS");
         try {
-            fileOut = new FileOutputStream(new File(folder.getAbsolutePath() + "\\" + fileName));
+            fileOut = new FileOutputStream(new File(fileWithPath));
 //            fileOut = new FileOutputStream(new File("body.xlsx"));
             removeDataSheet(workbook);
             dataSheet = workbook.createSheet("data");
