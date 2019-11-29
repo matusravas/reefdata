@@ -8,9 +8,8 @@ import java.util.Calendar;
 public class Main {
 
     public static void main(String[] args) {
-        long beginTime = getBeginTime();
         Excel excel = new Excel();
-        //finding excel document
+        //finding available excel documents
         String fileName = "";
         BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
         do {
@@ -22,6 +21,7 @@ public class Main {
             }
         } while (excel.findExcelFiles(fileName) != 0);
         //opening the excel document
+        long beginTime = getBeginTime();
         excel.openExcelDoc();
         //reading data
         System.out.println("Reading data...");
@@ -51,5 +51,4 @@ public class Main {
         Calendar cal = Calendar.getInstance();
         return cal.getTimeInMillis();
     }
-
 }

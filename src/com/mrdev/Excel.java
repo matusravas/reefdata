@@ -41,25 +41,27 @@ class Excel {
         File folder;
         if (name.isEmpty()) {
             folder = new File("./");
-            System.out.println("Zoznam najdenych suborov: ");
+            System.out.println("Zoznam najdenych suborov:\n");
             File[] listOfFiles = folder.listFiles();
             ArrayList<File> listOfWantedFiles = new ArrayList<>();
             int countOfWantedFiles = 0;
-            for (int i = 0; i < listOfFiles.length; i++) {
-                if (listOfFiles[i].isFile() && listOfFiles[i].getName().contains(".xlsx")) {
-                    File file = new File(listOfFiles[i].getAbsolutePath());
-                    listOfWantedFiles.add(file);
-                    countOfWantedFiles++;
-                    System.out.println(countOfWantedFiles + ": " + listOfWantedFiles.get(countOfWantedFiles - 1));
-                    try {
-                        fileIn = new FileInputStream(file);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
+            if (listOfFiles != null) {
+                for (File listOfFile : listOfFiles) {
+                    if (listOfFile.isFile() && listOfFile.getName().contains(".xlsx")) {
+                        File file = new File(listOfFile.getName());
+                        listOfWantedFiles.add(file);
+                        countOfWantedFiles++;
+                        System.out.println(countOfWantedFiles + ": " + listOfWantedFiles.get(countOfWantedFiles - 1));
+                        try {
+                            fileIn = new FileInputStream(file);
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
             BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-            System.out.print("Zadajte poradove cislo z predchadzajuceho zoznamu suborov: ");
+            System.out.print("\nZadajte poradove cislo z predchadzajuceho zoznamu suborov: ");
             try {
                 fileName = new StringBuilder();
                 int index = Integer.parseInt(buffer.readLine());
@@ -82,7 +84,6 @@ class Excel {
                 }
                 fileWithPath = folder.getAbsolutePath() + "\\" + fileName;
                 fileIn = new FileInputStream(new File(fileWithPath));
-//                fileIn = new FileInputStream(new File("C:\\BOX\\ReefData\\bodyx.xlsx")); //alternativa natvrdo
             } catch (FileNotFoundException e) {
                 System.out.println(folder.getAbsolutePath() + "\\" + fileName + " neexistuje");
                 return 1;
@@ -94,18 +95,14 @@ class Excel {
     void openExcelDoc() {
         System.out.println("Opening document: " + fileWithPath);
         try {
-//            fileIn = new FileInputStream(new File("C:\\BOX\\ReefData\\bodyx.xlsx"));
-            //fileIn = new FileInputStream(new File("C:\\BOX\\ReefData\\out\\artifacts\\ReefData_jar\\bodyx.xlsx"));
             workbook = new XSSFWorkbook(fileIn);
         } catch (IOException e) {
-            System.out.println("Dokument bodyx.xlsx neexistuje v adresari, kde sa nachadza spustany .exe subor!");
+            System.out.println("Dokument " + fileWithPath + " neexistuje v adresari, kde sa nachadza spustany .exe subor!");
         }
         try {
-            gpsSheet = workbook.getSheetAt(0);
-            sonarSheet = workbook.getSheetAt(1);
-            timeDelaySheet = workbook.getSheetAt(2);
+            this.findRelevantSheets();
         } catch (IllegalArgumentException ex) {
-            System.out.println("Skontroluj spravnost harkov!\n-Prvy harok GPS body\n-Druhy harok sonar body\n-Treti harok casovy posun");
+            System.out.println("Skontroluj ci dostupnost obsahuje vsetky potrebne harky:\n-harok: gps \n-harok: sonar body\n-harok: posun");
 
         }
     }
@@ -114,8 +111,7 @@ class Excel {
         try {
             fileIn.close();
         } catch (IOException e) {
-            System.out.println("Dokument body.xlsx je prave otovreny, zatvor ho a spusti .exe znova!");
-//            e.printStackTrace();
+            System.out.println("Dokument " + fileWithPath + " je prave otovreny, zatvor ho a spusti .exe znova!");
         }
     }
 
@@ -142,7 +138,7 @@ class Excel {
                     gpsDataList.add(data);
                 }
             } catch (IllegalArgumentException ex) {
-                System.out.println("V 1. harku (GPS) musia byt GPS suradnice x-ove v 2.stlpci, suradnice y-ove v 3. stlpci a casy v 12. stlpci!!!");
+                System.out.println("V harku (GPS) musia byt x-ove suradnice v 2.stlpci, y-ove v 3. stlpci a casy v 12. stlpci!!!");
 
             }
         }
@@ -162,7 +158,6 @@ class Excel {
                 data.setDepth(depth.getNumericCellValue());
                 try {
                     cal.setTime(df.parse(dataFormatter.formatCellValue(row.getCell(7))));
-//                    cal.add(Calendar.HOUR_OF_DAY, this.timeDelay);
                     cal.add(Calendar.HOUR_OF_DAY, -(int) timeDelayHours);
                     cal.add(Calendar.MINUTE, -(int) timeDelayMinutes);
                     cal.add(Calendar.SECOND, -(int) timeDelaySeconds);
@@ -172,7 +167,7 @@ class Excel {
                 }
                 sonarDataList.add(data);
             } catch (IllegalArgumentException ex) {
-                System.out.println("V 2. harku (sonar) musia byt hlbky v 3.stlpci a casy v 8. stlpci!!!");
+                System.out.println("V harku (sonar) musia byt hlbky v 3.stlpci a casy v 8. stlpci!!!");
             }
         }
     }
@@ -190,12 +185,10 @@ class Excel {
         SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss.SS");
         try {
             fileOut = new FileOutputStream(new File(fileWithPath));
-//            fileOut = new FileOutputStream(new File("body.xlsx"));
             removeDataSheet(workbook);
             dataSheet = workbook.createSheet("data");
         } catch (FileNotFoundException e) {
-            System.out.println("Hodnoty sa nedaju zapisat, pretoze dokument body.xlsx je prave otovreny, zatvor ho a spusti .exe znova!");
-//            e.printStackTrace();
+            System.out.println("Hodnoty sa nedaju zapisat, pretoze dokument " + fileWithPath + " je prave otovreny, zatvor ho a spusti .exe znova!");
         }
         for (int i = 0; i < gpsDataList.size(); i++) { //prechadzam data z GPS
             currentGPS = gpsDataList.get(i).getTimestamp();
@@ -225,14 +218,13 @@ class Excel {
             Cell timeDiff = row.createCell(5);
             timeDiff.setCellValue((gpsDataList.get(i).getTimestamp() -
                     sonarDataList.get(sonarIndex).getTimestamp()) / 1000.000);
-//            rowIndex++;
         }
         try {
             workbook.write(fileOut);
             fileOut.close();
             workbook.close();
         } catch (IOException e) {
-            System.out.println("Hodnoty sa nedaju zapisat, pretoze dokument body.xlsx je prave otovreny, zatvor ho a spusti .exe znova!");
+            System.out.println("Hodnoty sa nedaju zapisat, pretoze dokument " + fileWithPath + "je prave otovreny, zatvor ho a spusti .exe znova!");
         }
     }
 
@@ -242,8 +234,9 @@ class Excel {
             this.timeDelayHours = row.getCell(0).getNumericCellValue();
             this.timeDelayMinutes = row.getCell(1).getNumericCellValue();
             this.timeDelaySeconds = row.getCell(2).getNumericCellValue();
-        } catch (IllegalArgumentException ex) {
-            System.out.println("V 3. harku (casovy posun) musi byt v 1. riadku a 1.stlpec celociselna hodnota casoveho posunu!!!");
+        } catch (IllegalArgumentException | NullPointerException ex) {
+            System.out.println("V harku s casovym posunom (harok posun), musia byt v 2. riadku stlpce:\n");
+            System.out.println("1. Hodiny, 2. Minuty, 3. Sekundy");
 
         }
     }
@@ -253,6 +246,23 @@ class Excel {
             XSSFSheet tmpSheet = workbook.getSheetAt(i);
             if (tmpSheet.getSheetName().equals("data")) {
                 workbook.removeSheetAt(i);
+            }
+        }
+    }
+
+    private void findRelevantSheets() {
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+            XSSFSheet tmpSheet = workbook.getSheetAt(i);
+            switch (tmpSheet.getSheetName().toLowerCase()) {
+                case "gps":
+                    gpsSheet = workbook.getSheetAt(i);
+                    break;
+                case "sonar":
+                    sonarSheet = workbook.getSheetAt(i);
+                    break;
+                case "posun":
+                    timeDelaySheet = workbook.getSheetAt(i);
+                    break;
             }
         }
     }
