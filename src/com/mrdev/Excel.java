@@ -194,6 +194,7 @@ class Excel {
             currentGPS = gpsDataList.get(i).getTimestamp();
             for (int j = 0; j < sonarDataList.size(); j++) { //hladam data zo sonarru pre najblizsi cas sonaru ku GPS
                 currentSonar = sonarDataList.get(j).getTimestamp();
+                System.out.println("i: " + i + " j:" + j);
                 if (j != sonarDataList.size() - 1) {
                     nextSonar = sonarDataList.get(j + 1).getTimestamp();
                     if (Math.abs(currentGPS - currentSonar) < Math.abs(currentGPS - nextSonar)) {
